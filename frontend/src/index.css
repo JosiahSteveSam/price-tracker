@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+/* Design tokens — docs/04-UI-UX-BRIEF.md. Components use these via Tailwind utilities
+   (bg-surface, text-muted, border-line, text-failed, ...), never raw hex. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --line: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #4f46e5;
+  --success: #15803d;
+  --retried: #b45309;
+  --failed: #b91c1c;
+  --missed: #6b7280;
+  --price-down: #15803d;
+  --price-up: #b91c1c;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f14;
+    --surface: #121821;
+    --line: #243041;
+    --text: #e6edf5;
+    --muted: #8b98a9;
+    --primary: #818cf8;
+    --success: #4ade80;
+    --retried: #fbbf24;
+    --failed: #f87171;
+    --missed: #9ca3af;
+    --price-down: #4ade80;
+    --price-up: #f87171;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-retried: var(--retried);
+  --color-failed: var(--failed);
+  --color-missed: var(--missed);
+  --color-price-down: var(--price-down);
+  --color-price-up: var(--price-up);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-sm text-text antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

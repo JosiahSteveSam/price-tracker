@@ -1,0 +1,6 @@
+# Normalize line endings (Render/Vercel build on Linux); never touch binaries.
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary

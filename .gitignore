@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- PricePulse (Node/TypeScript) ---
+node_modules/
+.env.*
+!.env.example
+backend/artifacts/
+backend/spike/out/
+*.log
+.DS_Store
+# The Python template above ignores every lib/ dir; our TS source uses src/lib/.
+!frontend/src/lib/
+!backend/src/lib/
