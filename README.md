@@ -47,11 +47,11 @@ the [design note](DESIGN_NOTE.md).
 
 | Trigger | When | Notes |
 |---|---|---|
-| cron-job.org (primary) | `0 */2 * * *` **UTC** (00:00, 02:00 … 22:00 = 05:30, 07:30 … IST) | `POST /api/cron/scrape` with header `X-Cron-Secret`; answers `202` immediately, scrapes in the background |
+| cron-job.org (primary) | **every 5 minutes** | `POST /api/cron/scrape` with `X-Cron-Secret`. The **first** call in each 2-hour UTC slot (00:00, 02:00 … 22:00 = 05:30, 07:30 … IST) starts the run (`202`, answered immediately); later calls in the slot get `200 skipped`. This makes every slot retry itself every 5 min and keeps the free instance awake |
 | GitHub Actions (backup) | `7 */2 * * *` and `37 */2 * * *` UTC | `.github/workflows/cron-backup.yml`; wakes the sleeping free instance with up to 2 min patience, then calls the same endpoint |
 
 Each 2-hour UTC slot runs **at most once** (unique index on the slot), so duplicate or late triggers are harmless
-(`200 {"skipped":"slot_already_ran"}`). A run scrapes every active tracked item: up to **4 fresh page loads** per
+(`200 {"skipped":"slot_already_ran"}`): scraping still happens exactly once every 2 hours. A run scrapes every active tracked item: up to **4 fresh page loads** per
 item, each with up to 6 in-page rounds; items of the same product share one page load. Slots that never ran are
 reported as **missed** in `/api/runs` and in the UI.
 
@@ -168,8 +168,11 @@ interrupted runs now). The store also misbehaves on its own — cookie dialog, i
   The image is `mcr.microsoft.com/playwright:v1.63.0-noble` (must match the pinned npm `playwright@1.63.0`).
 - **Vercel** — import the repo, **Root Directory `frontend`**, preset Vite, `VITE_API_BASE_URL`. `vercel.json`
   rewrites all paths to the SPA.
-- **cron-job.org** — `POST https://<api>/api/cron/scrape`, header `X-Cron-Secret`, custom schedule minute 0,
-  hours 0,2,…,22, **time zone UTC**, timeout 30 s. Use `https://` (Render answers `http://` with a 307).
+- **cron-job.org** — `POST https://<api>/api/cron/scrape`, every 5 minutes, timeout 30 s, headers
+  `X-Cron-Secret: <secret>`, **`Accept: application/json`** and **`User-Agent: PricePulse-cron/1.0`**. The last two
+  matter: while a free Render instance is asleep, Render serves an HTML loading page to *browser-like* requests
+  (cron-job.org's defaults) instead of forwarding them, which cron-job.org reports as "output too large".
+  Use `https://` (Render answers `http://` with a 307).
 - **GitHub Actions** — add the `CRON_SECRET` repository secret to enable the backup scheduler.
 
 ## Tests

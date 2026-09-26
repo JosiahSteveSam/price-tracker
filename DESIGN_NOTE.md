@@ -60,10 +60,13 @@ records `RUN_BUDGET_EXCEEDED` for items it didn't reach. Scheduled slots with no
 **Free-tier scheduling.** The cron endpoint validates a secret and answers `202` immediately (cron-job.org gives
 up after 30 s; a run takes minutes). Each 2-hour UTC slot has a unique index, so any number of triggers is safe.
 After the first unattended slot succeeded, cron-job.org's requests stopped reaching the app ("output too large"
-in 0.7 s — something in front of Render answered instead; not reproducible from other networks) and three slots
-were missed. The history showed the gap honestly; the fix was a **second, independent trigger** (GitHub Actions,
-twice per slot, waiting patiently for the cold start). Two schedulers onto one idempotent endpoint removes the
-single point of failure.
+in 0.7 s, no run rows) and five slots were missed — shown honestly as **missed** in the UI, not hidden. Diagnosis:
+keeping the instance warm made the next slot succeed from cron-job.org unchanged, and Render's docs confirm that
+while a free service is spinning up it **serves an HTML loading page to browser-like requests** instead of
+forwarding them — and cron-job.org sends browser-like headers. Fixes: the cron job now sends
+`Accept: application/json` and a non-browser `User-Agent`, and calls **every 5 minutes** — the slot index means
+the first call per slot runs it and the rest return `skipped`, so each slot retries itself and the instance stays
+warm. A **second, independent trigger** (GitHub Actions, `.github/workflows/cron-backup.yml`) is kept as a backup.
 
 ## 4. Trade-offs
 
