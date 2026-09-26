@@ -1,6 +1,7 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from './client';
 import type {
+  Alert,
   Attempt,
   CatalogResult,
   Health,
@@ -93,5 +94,14 @@ export function useTrackProduct() {
       void qc.invalidateQueries({ queryKey: ['tracked'] });
       void qc.invalidateQueries({ queryKey: ['product'] });
     },
+  });
+}
+
+export function useAlerts(trackedId?: string) {
+  return useQuery({
+    queryKey: ['alerts', trackedId ?? 'all'],
+    queryFn: () =>
+      apiGet<{ alerts: Alert[] }>(`/api/alerts?limit=20${trackedId ? `&trackedId=${trackedId}` : ''}`).then((r) => r.alerts),
+    refetchInterval: 60_000,
   });
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { apiUrl } from '../api/client';
 import { useRuns, useTracked } from '../api/hooks';
+import { AlertsList, StructureBanner } from '../components/AlertsPanel';
 import type { TrackedSummary } from '../api/types';
 import {
   Card,
@@ -74,7 +75,7 @@ function ItemCard({ item }: { item: TrackedSummary }) {
 
 export function DashboardPage() {
   const tracked = useTracked();
-  useNow(); // re-render relative times every 30 s
+  const now = useNow(); // re-render relative times every 30 s
   const runs = useRuns(5);
   const next = runs.data?.schedule.nextSlot;
   const lastRun = runs.data?.runs[0];
@@ -113,6 +114,8 @@ export function DashboardPage() {
         }
       />
 
+      <StructureBanner now={now} />
+
       {tracked.isPending && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
@@ -141,6 +144,10 @@ export function DashboardPage() {
           ))}
         </div>
       )}
+
+      <div className="mt-6">
+        <AlertsList title="Recent alerts" now={now} />
+      </div>
     </>
   );
 }

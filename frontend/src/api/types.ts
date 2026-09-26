@@ -138,3 +138,13 @@ export interface Health {
   lastRun: { id: string; trigger: string; status: RunStatus; startedAt: string; finishedAt: string | null } | null;
   activeRun: { runId: string | null; trigger: string } | null;
 }
+
+export interface Alert {
+  id: string;
+  trackedItemId: string | null;
+  attemptId: string | null;
+  type: 'price_drop' | 'back_in_stock' | 'structure_change';
+  message: string;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}

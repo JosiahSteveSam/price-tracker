@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { apiUrl } from '../api/client';
 import { useAttempts, useHistory, useProduct, useRuns, useTrackedItem } from '../api/hooks';
 import type { HistoryPoint } from '../api/types';
+import { AlertsList } from '../components/AlertsPanel';
 import { PriceChart } from '../components/PriceChart';
 import { ScrapeLogTable } from '../components/ScrapeLogTable';
 import { Card, EmptyState, ErrorState, OutcomeBadge, PriceChange, Skeleton } from '../components/ui';
@@ -229,6 +230,10 @@ export function ItemPage() {
       )}
       {tab === 'prices' && history.data && <PriceTable points={history.data} currency={currency} />}
       {tab === 'info' && <ProductInfo productId={item.storeProductId} />}
+
+      <div className="mt-6">
+        <AlertsList trackedId={item.id} title="Alerts for this item" now={now} />
+      </div>
     </>
   );
 }

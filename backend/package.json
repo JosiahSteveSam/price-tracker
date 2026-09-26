@@ -38,6 +38,7 @@
     "format": "prettier --write src test",
     "scrape": "tsx --env-file-if-exists=.env src/cli/scrape.ts",
     "scrape:headed": "tsx --env-file-if-exists=.env src/cli/scrape.ts --headed",
-    "db:check": "tsx --env-file-if-exists=.env src/cli/dbCheck.ts"
+    "db:check": "tsx --env-file-if-exists=.env src/cli/dbCheck.ts",
+    "alerts:backfill": "tsx --env-file-if-exists=.env src/cli/backfillAlerts.ts"
   }
 }

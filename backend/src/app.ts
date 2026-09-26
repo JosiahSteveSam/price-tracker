@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import { config } from './config.js';
 import { errorHandler, notFound } from './http.js';
+import { alertsRouter } from './routes/alerts.js';
 import { catalogRouter } from './routes/catalog.js';
 import { cronRouter } from './routes/cron.js';
 import { exportRouter } from './routes/export.js';
@@ -22,6 +23,7 @@ export function createApp() {
   app.use(trackedRouter);
   app.use(runsRouter);
   app.use(exportRouter);
+  app.use(alertsRouter);
 
   app.use(notFound);
   app.use(errorHandler);

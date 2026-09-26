@@ -126,14 +126,14 @@ In dependency order:
 
 ## Phase 8: Hardening + bonuses (in this order; stop when time runs out)
 
-1. [ ] Multiple options of one product in one page load (runner grouping).
-2. [ ] Change detection: `structure_signatures` + `structure_change` alert + a dashboard banner.
-3. [ ] In-app alerts: price drop, back in stock (bell/list on the dashboard).
-4. [ ] GitHub Actions CI: typecheck, lint, test for both packages.
-5. [ ] Per-item frequency (UI select; cron switches to `*/30` with the due-based runner). **Only if everything else is done.** Changing the cron cadence late is risky.
-6. [ ] SendGrid email alerts. Lowest priority.
+1. [x] Multiple options of one product in one page load (runner grouping). *(Synthesizer o1 + o3 share a page load.)*
+2. [x] Change detection: every run records the manifest-shape signatures it saw (`structure_signatures`); a never-seen signature raises a `structure_change` alert saying whether extraction still worked; layout-type extraction failures (`SELECTOR_CONFLICT`, `PRICE_PARSE_ERROR`, …) also alert (at most once per code per item per 6 h). Dashboard banner for the last 24 h.
+3. [x] In-app alerts: price drop and back in stock, compared against the previous **valid** reading. Dashboard "Recent alerts" plus per-item alerts. `npm run alerts:backfill` derived 3 alerts from existing history (idempotent).
+4. [x] GitHub Actions CI (`.github/workflows/ci.yml`): typecheck, lint, test and build for both packages.
+5. [ ] Per-item frequency: **skipped** (changing the cron cadence this close to the deadline is risky; the schema supports it).
+6. [ ] SendGrid email alerts: **skipped** (lowest priority).
 
-**Done:** each bonus that's shipped works live and is mentioned in the README.
+**Status: DONE (2026-09-26).** Alerts and change detection can never break a run (errors are swallowed and logged).
 
 ## Phase 9: Deliverables
 

@@ -7,6 +7,7 @@ import { logger } from '../logger.js';
 import { BrowserManager } from './browser.js';
 import { ScrapeError, toScrapeError, type ErrorCode } from './errors.js';
 import { sleep } from './retry.js';
+import { onAttemptStored, recordStructures, type StructureSighting } from '../services/alertService.js';
 import { scrapeGroup, type AttemptResult } from './scrapeGroup.js';
 
 // Run orchestration — docs/07-SCRAPER-SPEC.md §Run orchestration. Invariant: every item planned for a run
@@ -75,6 +76,7 @@ async function runScrapeNow(opts: RunOptions): Promise<RunSummary> {
   const heartbeat = setInterval(() => void runsRepo.heartbeat(run.id).catch(() => {}), HEARTBEAT_EVERY_MS);
   const browser = new BrowserManager({ headless: !opts.headed, slowMo: opts.slowMo });
   const written = new Set<string>();
+  const sightings = new Map<string, StructureSighting>();
   let items: TrackedItem[] = [];
   let signature: string | null = null;
 
@@ -116,12 +118,21 @@ async function runScrapeNow(opts: RunOptions): Promise<RunSummary> {
           artifactsDir: opts.artifactsDir,
           log: (msg, data) => runLog.info({ product: storeProductId, ...data }, msg),
         },
+        {
+          onPageLoad: (s) => {
+            const acc = sightings.get(s.signature) ?? { ...s, attempts: 0, valid: 0 };
+            acc.attempts += s.attempts;
+            acc.valid += s.valid;
+            sightings.set(s.signature, acc);
+          },
+        },
       );
       for (const r of results) {
         const item = group.find((i) => i.id === r.item.id)!;
-        await attemptsRepo.insert(toNewAttempt(run.id, item.id, r));
+        const stored = await attemptsRepo.insert(toNewAttempt(run.id, item.id, r));
         written.add(item.id);
         signature = r.pageSignature ?? signature;
+        await onAttemptStored(item, stored); // bonus alerts; never throws
         if (r.productName && r.productName !== item.productName) {
           await trackedRepo.updateProductName(item.id, r.productName);
         }
@@ -145,6 +156,7 @@ async function runScrapeNow(opts: RunOptions): Promise<RunSummary> {
       await runsRepo.heartbeat(run.id);
     }
 
+    await recordStructures([...sightings.values()]); // change detection; never throws
     const counts = await attemptsRepo.countsForRun(run.id);
     const status: RunStatus = counts.failed > 0 ? 'completed_with_failures' : 'completed';
     await runsRepo.finish(run.id, {

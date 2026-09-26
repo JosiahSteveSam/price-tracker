@@ -36,6 +36,14 @@ export interface AttemptResult {
   productName?: string;
 }
 
+/** One page load's layout signature and how extraction fared on it (feeds change detection). */
+export interface PageSighting {
+  signature: string;
+  shape: Record<string, unknown>;
+  attempts: number;
+  valid: number;
+}
+
 export type ReadPage = (
   browser: BrowserManager,
   target: PageTarget,
@@ -47,7 +55,17 @@ export async function scrapeGroup(
   storeProductId: number,
   items: GroupItem[],
   opts: PageOptions,
-  { readPage = scrapeProductPage as ReadPage, maxTries = config.SCRAPE_MAX_TRIES, backoff = backoffMs } = {},
+  {
+    readPage = scrapeProductPage as ReadPage,
+    maxTries = config.SCRAPE_MAX_TRIES,
+    backoff = backoffMs,
+    onPageLoad,
+  }: {
+    readPage?: ReadPage;
+    maxTries?: number;
+    backoff?: typeof backoffMs;
+    onPageLoad?: (s: PageSighting) => void;
+  } = {},
 ): Promise<AttemptResult[]> {
   const startedAt = new Date().toISOString();
   const tries = new Map<GroupItem, TryLog[]>(items.map((i) => [i, []]));
@@ -109,7 +127,14 @@ export async function scrapeGroup(
         'TRY_TIMEOUT',
         () => void browser.close(), // kills the stuck page; the manager relaunches on next use
       );
-      signature = manifestSignature(page.manifest).signature;
+      const sig = manifestSignature(page.manifest);
+      signature = sig.signature;
+      onPageLoad?.({
+        signature: sig.signature,
+        shape: sig.shape,
+        attempts: page.results.length,
+        valid: page.results.filter((r) => r.ok).length,
+      });
     } catch (err) {
       pageError = toScrapeError(err);
       opts.log('page load failed', { try: n, code: pageError.code, message: pageError.message });
