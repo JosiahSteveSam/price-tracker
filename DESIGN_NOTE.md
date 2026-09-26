@@ -60,7 +60,7 @@ records `RUN_BUDGET_EXCEEDED` for items it didn't reach. Scheduled slots with no
 **Free-tier scheduling.** The cron endpoint validates a secret and answers `202` immediately (cron-job.org gives
 up after 30 s; a run takes minutes). Each 2-hour UTC slot has a unique index, so any number of triggers is safe.
 After the first unattended slot succeeded, cron-job.org's requests stopped reaching the app ("output too large"
-in 0.7 s, no run rows) and five slots were missed — shown honestly as **missed** in the UI, not hidden. Diagnosis:
+in 0.7 s, no run rows) and four slots were missed — shown honestly as **missed** in the UI, not hidden. Diagnosis:
 keeping the instance warm made the next slot succeed from cron-job.org unchanged, and Render's docs confirm that
 while a free service is spinning up it **serves an HTML loading page to browser-like requests** instead of
 forwarding them — and cron-job.org sends browser-like headers. Fixes: the cron job now sends
@@ -99,8 +99,10 @@ warm. A **second, independent trigger** (GitHub Actions, `.github/workflows/cron
 | Paged the listing 16 pages assuming stable order | Catalogue had 918 of 960 products | Sample until all `count` ids are seen |
 | Charted failures with a Recharts `Scatter` over all rows | A phantom ✕ at the top edge for every *successful* reading | Scatter gets only failed rows |
 
-## 6. Numbers (production data, 26 Sep 2026 ~10:15 IST)
+## 6. Numbers (production data, 26 Sep 2026 17:10 IST)
 
-17 attempts across 4 tracked items (3 products): 14 success, 1 retried, 2 failed (both `RUN_INTERRUPTED` from the
-deliberate crash test). Across 18 page loads the scraper absorbed 5 rejected challenges, 7 ignored clicks and 16
-cookie-dialog clicks without storing a single unvalidated value.
+29 attempts across 4 tracked items (3 products): **26 success, 1 retried, 2 failed** — both failures are
+`RUN_INTERRUPTED` rows from the deliberate crash test; no attempt ever stored an unvalidated value. Across 30 page
+loads the scraper absorbed 5 rejected challenges, 10 ignored clicks and 33 cookie-dialog clicks (median valid
+read ≈ 23 s). Scheduled runs on Render: 4 completed at 4/4; 4 slots missed during the cron-job.org/Render
+loading-page issue, all shown as missed; every slot since the fix has run unattended.
