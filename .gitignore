@@ -233,3 +233,6 @@ backend/spike/out/
 docs/
 CLAUDE.md
 NOTES.md
+
+# Local Claude Code / editor config
+.claude/
