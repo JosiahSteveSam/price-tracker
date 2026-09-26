@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceArea,
   ResponsiveContainer,
   Scatter,
   Tooltip,
@@ -14,17 +15,20 @@ import { formatDateTime, formatMoney, formatStock, humanizeCode } from '../lib/f
 import { useNow } from '../lib/useNow';
 
 // Honest chart (docs/04 §Chart): the price line only connects valid readings and BREAKS at failed attempts;
-// failures are red ✕ markers along the bottom — never drawn as zero, never interpolated across.
+// failures are red ✕ markers along the bottom — never drawn as zero, never interpolated across. Scheduled
+// slots that never ran (missed) are shaded bands, and the line breaks across them too.
 
 type Range = '24h' | '3d' | 'all';
 const RANGE_MS: Record<Range, number> = { '24h': 86_400_000, '3d': 3 * 86_400_000, all: Infinity };
+const SLOT_MS = 2 * 60 * 60 * 1000;
 
 interface Row {
   x: number;
   price: number | null;
   stock: number | null;
   fail: number | null;
-  point: HistoryPoint;
+  /** A real attempt, or a synthetic gap row in the middle of a missed slot. */
+  point: HistoryPoint | { missedSlot: string };
 }
 
 interface TooltipProps {
@@ -36,6 +40,14 @@ interface TooltipProps {
 function ChartTooltip({ active, payload, currency }: TooltipProps) {
   const row = payload?.[0]?.payload as Row | undefined;
   if (!active || !row) return null;
+  if ('missedSlot' in row.point) {
+    return (
+      <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs shadow-sm">
+        <div className="font-medium">Slot {formatDateTime(row.point.missedSlot)}</div>
+        <div className="mt-1 text-missed">⏸ Missed — the scheduler never triggered this run</div>
+      </div>
+    );
+  }
   const p = row.point;
   return (
     <div className="rounded-md border border-line bg-surface px-3 py-2 text-xs shadow-sm">
@@ -69,12 +81,28 @@ const FailMark = (props: { cx?: number; cy?: number }) => {
   );
 };
 
-export function PriceChart({ points, currency }: { points: HistoryPoint[]; currency: string | null }) {
+export function PriceChart({
+  points,
+  currency,
+  missedSlots = [],
+  trackedSince,
+}: {
+  points: HistoryPoint[];
+  currency: string | null;
+  /** ISO starts of 2 h slots with no run at all (GET /api/runs → missedSlots). */
+  missedSlots?: string[];
+  trackedSince?: string;
+}) {
   const [range, setRange] = useState<Range>('all');
   const now = useNow(60_000);
-  const rows = useMemo<Row[]>(() => {
+  const { rows, missed } = useMemo(() => {
     const since = now - RANGE_MS[range];
-    return points
+    const from = Math.max(since, trackedSince ? Date.parse(trackedSince) - SLOT_MS : -Infinity);
+    const missed = missedSlots
+      .map((s) => Date.parse(s))
+      .filter((start) => start + SLOT_MS > from && start < now)
+      .map((start) => ({ start, end: Math.min(start + SLOT_MS, now) }));
+    const real: Row[] = points
       .filter((p) => Date.parse(p.t) >= since)
       .map((p) => ({
         x: Date.parse(p.t),
@@ -83,11 +111,28 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
         fail: p.outcome === 'failed' ? 0.04 : null,
         point: p,
       }));
-  }, [points, range, now]);
+    // A null row inside each missed slot breaks the line: no data was collected there.
+    const gaps: Row[] = missed.map((m) => ({
+      x: (m.start + m.end) / 2,
+      price: null,
+      stock: null,
+      fail: null,
+      point: { missedSlot: new Date(m.start).toISOString() },
+    }));
+    return { rows: [...real, ...gaps].sort((a, b) => a.x - b.x), missed };
+  }, [points, range, now, missedSlots, trackedSince]);
 
-  const valid = rows.filter((r) => r.price !== null).length;
-  const failed = rows.length - valid;
-  const spanDays = rows.length > 1 ? (rows.at(-1)!.x - rows[0]!.x) / 86_400_000 : 0;
+  const attempts = rows.filter((r) => !('missedSlot' in r.point));
+  const valid = attempts.filter((r) => r.price !== null).length;
+  const failed = attempts.length - valid;
+  const xMin = rows.length ? Math.min(rows[0]!.x, ...missed.map((m) => m.start)) : 0;
+  const xMax = rows.length ? Math.max(rows.at(-1)!.x, ...missed.map((m) => m.end)) : 0;
+  const spanDays = (xMax - xMin) / 86_400_000;
+  // Evenly spaced ticks on round hours (local time), so sparse data still gets a readable axis.
+  const stepMs = spanDays <= 0.5 ? 2 * 3_600_000 : spanDays <= 2 ? 6 * 3_600_000 : 86_400_000;
+  const tzOffset = new Date(xMin).getTimezoneOffset() * 60_000;
+  const ticks: number[] = [];
+  for (let t = Math.ceil((xMin - tzOffset) / stepMs) * stepMs + tzOffset; t <= xMax; t += stepMs) ticks.push(t);
   const tick = (x: number) =>
     new Intl.DateTimeFormat('en-IN', spanDays > 1.5 ? { day: '2-digit', month: 'short', hour: '2-digit', hour12: false } : { hour: '2-digit', minute: '2-digit', hour12: false }).format(x);
 
@@ -95,7 +140,8 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted">
-          {valid} valid reading{valid === 1 ? '' : 's'} · <span className={failed ? 'text-failed' : ''}>{failed} failed</span> in range
+          {valid} valid reading{valid === 1 ? '' : 's'} · <span className={failed ? 'text-failed' : ''}>{failed} failed</span>
+          {missed.length > 0 && <span className="text-missed"> · {missed.length} missed slot{missed.length === 1 ? '' : 's'}</span>} in range
         </p>
         <div role="tablist" aria-label="Chart range" className="inline-flex rounded-md border border-line p-0.5 text-xs">
           {(['24h', '3d', 'all'] as const).map((r) => (
@@ -111,7 +157,7 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
           ))}
         </div>
       </div>
-      {rows.length === 0 ? (
+      {attempts.length === 0 ? (
         <div className="grid h-64 place-items-center rounded-lg border border-dashed border-line text-muted">
           No scrapes in this range yet — see the scrape log below.
         </div>
@@ -124,7 +170,8 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
                 dataKey="x"
                 type="number"
                 scale="time"
-                domain={['dataMin', 'dataMax']}
+                domain={[xMin, xMax]}
+                ticks={ticks}
                 tickFormatter={tick}
                 stroke="var(--muted)"
                 fontSize={11}
@@ -140,6 +187,20 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
               />
               <YAxis yAxisId="stock" orientation="right" allowDecimals={false} stroke="var(--muted)" fontSize={11} width={36} />
               <YAxis yAxisId="marker" hide orientation="right" width={0} domain={[0, 1]} />
+              {missed.map((m) => (
+                <ReferenceArea
+                  key={m.start}
+                  yAxisId="price"
+                  x1={m.start}
+                  x2={m.end}
+                  fill="var(--missed)"
+                  fillOpacity={0.14}
+                  stroke="var(--missed)"
+                  strokeOpacity={0.4}
+                  strokeDasharray="3 3"
+                  ifOverflow="extendDomain"
+                />
+              ))}
               <Tooltip content={({ active, payload }) => <ChartTooltip active={active} payload={payload} currency={currency} />} />
               <Line
                 yAxisId="stock"
@@ -183,6 +244,10 @@ export function PriceChart({ points, currency }: { points: HistoryPoint[]; curre
         <span>┅ Stock (right axis)</span>
         <span>
           <span className="text-failed">✕</span> Failed attempt — no data, line breaks
+        </span>
+        <span>
+          <span className="inline-block h-2.5 w-3 rounded-sm border border-dashed border-missed bg-missed/20 align-middle" /> Missed
+          slot — scheduler never ran
         </span>
       </p>
     </div>

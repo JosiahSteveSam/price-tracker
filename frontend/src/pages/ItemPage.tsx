@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { apiUrl } from '../api/client';
-import { useAttempts, useHistory, useProduct, useTrackedItem } from '../api/hooks';
+import { useAttempts, useHistory, useProduct, useRuns, useTrackedItem } from '../api/hooks';
 import type { HistoryPoint } from '../api/types';
 import { PriceChart } from '../components/PriceChart';
 import { ScrapeLogTable } from '../components/ScrapeLogTable';
@@ -81,6 +81,7 @@ export function ItemPage() {
   const waitingFirst = params.has('new') && !summary.data?.lastAttempt;
   const history = useHistory(trackedId, waitingFirst);
   const attempts = useAttempts(trackedId, waitingFirst);
+  const runs = useRuns(120);
   useTrackedItem(trackedId, { fastPoll: waitingFirst });
 
   if (summary.isPending) {
@@ -170,7 +171,14 @@ export function ItemPage() {
         <Card className="p-4">
           {history.isPending && <Skeleton className="h-72 w-full" />}
           {history.isError && <ErrorState error={history.error} onRetry={() => void history.refetch()} />}
-          {history.data && <PriceChart points={history.data} currency={currency} />}
+          {history.data && (
+            <PriceChart
+              points={history.data}
+              currency={currency}
+              missedSlots={runs.data?.missedSlots}
+              trackedSince={item.createdAt}
+            />
+          )}
         </Card>
       </div>
 

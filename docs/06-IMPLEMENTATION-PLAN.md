@@ -101,9 +101,13 @@ In dependency order:
 
 **Done:** **two consecutive unattended cron runs** recorded in Supabase with correct data, and nobody touched anything in between.
 
+**Status (2026-09-26 10:00 IST):** Render live (Docker, Singapore), Chromium fits (manual scrape 18 s). Slot 20:00 UTC ran unattended 4/4. Slots 22:00, 00:00 and 02:00 UTC were **missed**: cron-job.org got "output too large" from Render's edge, and the keep-warm job was auto-disabled. The GitHub Actions backup trigger was added (secret set). Waiting for two consecutive unattended slots.
+
 ## Phase 6: Frontend
 
-- [ ] Design tokens and base layout (doc 04), API client with retry, react-query hooks.
+**Status: DONE (2026-09-26).** Live at https://price-tracker-two-sigma.vercel.app (Vercel, root `frontend`, `VITE_API_BASE_URL` → Render; CORS set on Render). Checked on desktop and 375 px.
+
+- [x] Design tokens and base layout (doc 04), API client with retry, react-query hooks.
 - [ ] Dashboard (cards, status strip), `/track` (search → options → start), `/items/:id` (header, current state, chart, scrape log, price table, product info).
 - [ ] Loading, empty and error states from doc 03. Cold-backend banner.
 - [ ] Vercel: root `frontend/`, `VITE_API_BASE_URL`, SPA rewrite in `vercel.json`. Add the Vercel URL to Render's `CORS_ORIGIN`.
@@ -112,9 +116,11 @@ In dependency order:
 
 ## Phase 7: Export, runs page, honesty polish
 
-- [ ] `GET /api/export.csv` (streamed, RFC 4180, BOM, exact column order) + Export buttons (global and per item).
-- [ ] `GET /api/runs` with missed-slot detection + `/runs` page.
-- [ ] Chart shows failures as ticks and missed slots as hatched bands.
+- [x] `GET /api/export.csv` (streamed, RFC 4180, BOM, exact column order) + Export buttons (global and per item).
+- [x] `GET /api/runs` with missed-slot detection + `/runs` page.
+- [x] Chart shows failures as ✕ markers (the line breaks) and missed slots as shaded bands (the line breaks there too).
+
+**Status: DONE (2026-09-26).** CSV verified byte-exact; the Runs page lists missed slots; item charts shade missed slots within the item's tracked period.
 
 **Done:** the exported CSV opens in Excel and Sheets with the exact columns, failed rows have empty price and stock, and the row count equals the number of attempts in the DB.
 

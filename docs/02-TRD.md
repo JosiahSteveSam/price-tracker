@@ -12,7 +12,7 @@
 | **Database** | Supabase PostgreSQL, accessed **only by the backend** with `@supabase/supabase-js` and the service-role key |
 | **Auth** | No user auth (out of scope). Machine endpoints use shared secrets: `X-Cron-Secret` for the cron trigger, `X-Admin-Token` for destructive/admin actions |
 | **Scraping** | **Hybrid.** Plain `fetch` (Node built-in) for the store's open JSON API (catalogue, product details, options). **Playwright (Chromium)** only for price and stock, which sit behind a browser-only challenge (see below) |
-| **Scheduling** | cron-job.org → `POST /api/cron/scrape` every 2 h at minute 0 UTC, plus a keep-warm `GET /healthz` every 10 min |
+| **Scheduling** | **Two independent triggers** on the same idempotent endpoint `POST /api/cron/scrape`: cron-job.org every 2 h at minute 0 UTC (primary), and a GitHub Actions scheduled workflow at :07 and :37 of every even hour (backup; waits patiently for Render's cold start). Keep-warm ping optional |
 | **Hosting** | Frontend on **Vercel**. Backend on **Render** (free web service, **Docker** runtime, based on `mcr.microsoft.com/playwright:v1.63.0-noble`; npm `playwright@1.63.0` pinned to match). DB on **Supabase** free tier |
 | **Validation** | `zod` v4 for env, request bodies and scraper output |
 | **Logging** | `pino` (JSON logs; readable with `pino-pretty` in dev and headed mode) |
@@ -160,6 +160,7 @@ All responses are JSON unless noted. Errors look like `{ error: { code, message 
   3. **Idempotency by slot:** `slot_key` = the trigger time rounded down to the 2 h boundary (UTC), unique for `trigger='cron'`. Duplicate or retried triggers do nothing.
 - **Recovery:** at the start of every run (and on server boot), any run still `running` whose heartbeat is older than 15 min is marked `interrupted`. Every item it didn't finish gets a `failed` attempt with `error_code='RUN_INTERRUPTED'`. That keeps the history honest when Render restarts mid-run.
 - **Missed slots:** `/api/runs` works out which expected 2 h slots have no run and returns them as `missed`. The UI shows them.
+- **Observed 2026-09-26:** after the first successful slot, cron-job.org's requests stopped reaching the app. Its history shows `Failed (output too large)` after ~0.7 s, and no run row was created, so something in front of Render answered with a large page. It couldn't be reproduced from other networks, even with cron-job.org's User-Agent. Keep-warm was auto-disabled after 26 such failures. **Mitigation:** `.github/workflows/cron-backup.yml` as a second, independent trigger (wake with 2-minute patience, then POST). Slot idempotency makes the two triggers safe to run together, and missed slots are shown, not hidden.
 - **Contingency if Chromium runs out of memory on Render's 512 MB:** run the same `npm run scrape -- --trigger=cron` from a GitHub Actions `schedule` workflow (7 GB runner) writing to the same Supabase. The brief allows "a scheduled function". Document it in the README if we use it.
 
 ## Hard constraints
