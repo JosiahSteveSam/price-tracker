@@ -1,0 +1,56 @@
+# Backup scheduler for the 2-hourly scrape. cron-job.org is the primary trigger; this is an independent second
+# one. Both call the same endpoint, and the backend runs each 2-hour UTC slot at most once (unique slot index),
+# so whichever trigger arrives first runs the slot and the rest get `200 skipped`.
+#
+# Why a backup: Render's free instance sleeps and can take > 30 s to wake, which is cron-job.org's request
+# timeout. Here we can wait for the wake-up patiently. GitHub may delay scheduled workflows, so we fire twice
+# per slot (:07 and :37) — both still inside the slot.
+#
+# Setup: repo Settings → Secrets and variables → Actions → New repository secret `CRON_SECRET`
+# (same value as on Render). Optional repository variable `API_BASE_URL`.
+name: Scheduled scrape (backup trigger)
+
+on:
+  schedule:
+    - cron: '7 */2 * * *'
+    - cron: '37 */2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: scheduled-scrape
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      API: ${{ vars.API_BASE_URL || 'https://pricepulse-api-ngnu.onrender.com' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Check configuration
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::Repository secret CRON_SECRET is not set"; exit 1
+          fi
+
+      - name: Wake the API (free tier sleeps)
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 "$API/healthz" || true)
+            echo "healthz attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "::error::API did not wake up"; exit 1
+
+      - name: Trigger the current 2-hour slot (idempotent)
+        run: |
+          code=$(curl -s -o body.json -w '%{http_code}' --max-time 60 -X POST \
+            -H "X-Cron-Secret: $CRON_SECRET" "$API/api/cron/scrape")
+          echo "HTTP $code"; cat body.json; echo
+          case "$code" in
+            202) echo "::notice::Slot run started by the backup trigger" ;;
+            200) echo "::notice::Slot already ran (primary trigger worked)" ;;
+            *) echo "::error::cron endpoint returned HTTP $code"; exit 1 ;;
+          esac

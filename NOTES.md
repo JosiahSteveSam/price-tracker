@@ -32,6 +32,10 @@ Running log that feeds `DESIGN_NOTE.md`. Newest entries at the bottom. Keep entr
 - The page's default option is random; the price is stale while "Refreshing prices" is shown; the manifest rotates about every 4 h.
 - Spike results: 7/8 pairs valid on the first page load (8–40 s), the 8th on a fresh load.
 
+## Incidents
+
+- **2026-09-26: three scheduled slots missed (22:00, 00:00, 02:00 UTC).** The first unattended Render run (20:00 UTC) completed 4/4, then no runs arrived. At 04:07 UTC `/healthz` took 27.7 s and showed a fresh boot, so the keep-warm ping wasn't reaching the server either. The honest-history design surfaced it: `/api/runs` listed the slots as **missed** rather than hiding the gap. Response: (1) checked the cron-job.org side (see below); (2) added an **independent GitHub Actions backup trigger** (`.github/workflows/cron-backup.yml`, :07 and :37 of every even hour) that waits patiently for the cold start; slot idempotency makes duplicate triggers harmless. **Lesson:** a single external scheduler plus a sleeping free-tier host is a single point of failure; two independent triggers onto an idempotent endpoint removes it.
+
 ## Trade-offs
 
 - Playwright on Render's free tier (512 MB) is tight. We accept the memory risk for correctness, and keep a GitHub Actions scheduled workflow as a documented fallback.

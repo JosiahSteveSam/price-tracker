@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, init);
@@ -27,5 +27,10 @@ export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return body as T;
 }
+
+export const apiGet = <T>(path: string) => request<T>(path);
+
+export const apiPost = <T>(path: string, body: unknown) =>
+  request<T>(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
 
 export const apiUrl = (path: string) => `${API_BASE}${path}`;

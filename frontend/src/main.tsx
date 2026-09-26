@@ -3,7 +3,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Layout } from './components/Layout';
-import { DashboardPage, ItemPage, NotFoundPage, RunsPage, TrackPage } from './pages/placeholders';
+import { DashboardPage } from './pages/DashboardPage';
+import { ItemPage } from './pages/ItemPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { RunsPage } from './pages/RunsPage';
+import { TrackPage } from './pages/TrackPage';
 import './index.css';
 
 // The backend may be cold (Render free tier), so retry with backoff before surfacing errors.
