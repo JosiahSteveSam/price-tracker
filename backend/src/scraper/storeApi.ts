@@ -5,7 +5,7 @@ import { ScrapeError } from './errors.js';
 import { backoffMs, sleep } from './retry.js';
 
 // Plain HTTP client for the store's open JSON API (catalogue, product details, options).
-// Price/stock are NOT available here — they come from productPage.ts (docs/02-TRD.md §Why a hybrid scraper).
+// Price/stock are NOT available here — they come from productPage.ts (DESIGN_NOTE.md §2).
 
 const STORE = new URL(config.STORE_BASE_URL);
 

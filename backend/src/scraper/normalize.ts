@@ -1,7 +1,7 @@
 import type { StockStatus } from '../db/types.js';
 import type { ErrorCode } from './errors.js';
 
-// Parses every price/stock format the store renders — docs/07-SCRAPER-SPEC.md §Normalization.
+// Parses every price/stock format the store renders (DESIGN_NOTE.md §1).
 // Prices are returned in integer minor units (paise) so no float ever touches money.
 
 export type Parsed<T> = ({ ok: true } & T) | { ok: false; code: ErrorCode; detail: string };

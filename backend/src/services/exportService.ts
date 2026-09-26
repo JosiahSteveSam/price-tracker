@@ -3,7 +3,7 @@ import { attemptsRepo } from '../db/attemptsRepo.js';
 import { trackedRepo } from '../db/trackedRepo.js';
 import type { ScrapeAttempt, TrackedItem } from '../db/types.js';
 
-// CSV export — docs/01-PRD.md M8 and docs/05 §CSV mapping. One row per scrape attempt, failures included.
+// CSV export (columns fixed by the assignment brief). One row per scrape attempt, failures included.
 
 export const CSV_COLUMNS = [
   'product_id',

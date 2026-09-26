@@ -1,4 +1,4 @@
-// Domain types (camelCase). Repositories map to/from snake_case rows — docs/05-BACKEND-SCHEMA.md.
+// Domain types (camelCase). Repositories map to/from snake_case rows (see supabase/migrations).
 
 export type Outcome = 'success' | 'retried' | 'failed';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';

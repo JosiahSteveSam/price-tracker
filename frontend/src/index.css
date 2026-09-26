@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Design tokens — docs/04-UI-UX-BRIEF.md. Components use these via Tailwind utilities
+/* Design tokens. Components use these via Tailwind utilities
    (bg-surface, text-muted, border-line, text-failed, ...), never raw hex. */
 :root {
   --bg: #f8fafc;

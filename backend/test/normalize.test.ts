@@ -4,7 +4,7 @@ import { cleanText, parsePrice, parseStock } from '../src/scraper/normalize.js';
 const ZW = '\u200B';
 const NB = '\u00A0';
 
-describe('parsePrice — every format the store renders (docs/07 §Price formats)', () => {
+describe('parsePrice — every format the store renders', () => {
   const cases: [string, string, number][] = [
     ['default', '₹92,416', 9241600],
     ['default, lakh grouping', '₹1,02,657', 10265700],
@@ -45,7 +45,7 @@ describe('parsePrice — every format the store renders (docs/07 §Price formats
   });
 });
 
-describe('parseStock — every template (docs/07 §Stock formats)', () => {
+describe('parseStock — every template', () => {
   it.each([
     ['Sold out', 'out_of_stock', 0],
     ['Last few: 3', 'in_stock', 3],

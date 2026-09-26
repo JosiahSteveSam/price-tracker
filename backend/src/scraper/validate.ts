@@ -40,7 +40,7 @@ const MAX_PRICE_MINOR = 10_000_000 * 100;
 const sameLabel = (a: string, b: string) => cleanText(a).toLowerCase() === cleanText(b).toLowerCase();
 const fail = (code: ErrorCode, message: string): Validation => ({ ok: false, code, message });
 
-/** Applies every rule in docs/07-SCRAPER-SPEC.md §Validation. Any doubt → a failure code, never a guess. */
+/** Applies every validation rule (DESIGN_NOTE.md §3). Any doubt → a failure code, never a guess. */
 export function validateRead(read: RawRead, target: Target): Validation {
   if (read.path !== `/item/${target.storeProductId}`) {
     return fail('PRODUCT_MISMATCH', `page is ${read.path}, expected /item/${target.storeProductId}`);

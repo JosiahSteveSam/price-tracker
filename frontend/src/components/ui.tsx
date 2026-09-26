@@ -3,7 +3,7 @@ import { ApiError } from '../api/client';
 import type { Outcome } from '../api/types';
 import { formatMoney, priceChange } from '../lib/format';
 
-// Shared building blocks — docs/04-UI-UX-BRIEF.md. Status is never shown by colour alone.
+// Shared building blocks. Status is never shown by colour alone.
 
 const OUTCOME: Record<Outcome | 'missed' | 'running', { icon: string; label: string; cls: string }> = {
   success: { icon: '✓', label: 'Success', cls: 'text-success bg-success/10 border-success/25' },

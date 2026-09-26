@@ -3,7 +3,7 @@ import { attemptsRepo } from '../db/attemptsRepo.js';
 import type { ScrapeAttempt, TrackedItem } from '../db/types.js';
 import { logger } from '../logger.js';
 
-// Bonus features (docs/01-PRD.md Nice-to-have 2 + 3): price-drop / back-in-stock alerts and change detection.
+// Bonus features: price-drop / back-in-stock alerts and change detection.
 // Alerts are derived only from stored, validated attempts. Nothing here may ever break a scrape run: every
 // entry point swallows and logs its own errors.
 

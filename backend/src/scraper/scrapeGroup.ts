@@ -15,7 +15,7 @@ import { storeApi } from './storeApi.js';
 import type { ValidRead } from './validate.js';
 
 // Scrapes every tracked option of ONE product: up to MAX_TRIES fresh page loads, each covering only the
-// options still unresolved. Produces exactly one result per option — docs/07 §Pipeline, §Error codes.
+// options still unresolved. Produces exactly one result per option.
 
 export interface GroupItem extends OptionTarget {
   /** tracked_items.id (absent for ad-hoc dry runs). */

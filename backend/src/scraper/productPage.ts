@@ -10,7 +10,7 @@ import { storeUrl } from './storeApi.js';
 import { validateRead, type RawRead, type ValidRead } from './validate.js';
 
 // One "try" = one fresh browser context + page load of /item/:id, reading one or more options of that
-// product. Behaviour of the page is documented in docs/07-SCRAPER-SPEC.md §How the product page works.
+// product. The page's behaviour is summarised in DESIGN_NOTE.md §1.
 
 export interface OptionTarget {
   optionId: string;

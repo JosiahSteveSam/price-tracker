@@ -14,7 +14,7 @@ import type { HistoryPoint } from '../api/types';
 import { formatDateTime, formatMoney, formatStock, humanizeCode } from '../lib/format';
 import { useNow } from '../lib/useNow';
 
-// Honest chart (docs/04 §Chart): the price line only connects valid readings and BREAKS at failed attempts;
+// Honest chart: the price line only connects valid readings and BREAKS at failed attempts;
 // failures are red ✕ markers along the bottom — never drawn as zero, never interpolated across. Scheduled
 // slots that never ran (missed) are shaded bands, and the line breaks across them too.
 

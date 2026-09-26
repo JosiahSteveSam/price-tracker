@@ -1,4 +1,4 @@
-// Formatting helpers — docs/04-UI-UX-BRIEF.md §Typography. Times are shown in local time; the full
+// Formatting helpers. Times are shown in local time; the full
 // ISO UTC value goes in a title tooltip.
 
 const moneyFormatters = new Map<string, Intl.NumberFormat>();

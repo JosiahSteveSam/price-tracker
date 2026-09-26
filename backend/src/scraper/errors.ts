@@ -1,4 +1,4 @@
-// Error codes — docs/07-SCRAPER-SPEC.md §Error codes and retry policy.
+// Error codes and whether a fresh page load may fix them (DESIGN_NOTE.md §3).
 
 /** code → whether a fresh page load (a new "try") may fix it. */
 export const RETRYABLE = {

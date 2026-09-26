@@ -1,4 +1,4 @@
--- 0001_init.sql — PricePulse schema. Source of truth: docs/05-BACKEND-SCHEMA.md
+-- 0001_init.sql — PricePulse schema.
 -- Run once in the Supabase SQL Editor (or `supabase db push`). Not re-runnable: a second run fails at the
 -- first CREATE TABLE without changing anything. Verify afterwards with `npm run db:check` in backend/.
 

@@ -228,3 +228,8 @@ backend/spike/out/
 # The Python template above ignores every lib/ dir; our TS source uses src/lib/.
 !frontend/src/lib/
 !backend/src/lib/
+
+# Private planning material — kept locally, not published.
+docs/
+CLAUDE.md
+NOTES.md

@@ -10,7 +10,7 @@ import { sleep } from './retry.js';
 import { onAttemptStored, recordStructures, type StructureSighting } from '../services/alertService.js';
 import { scrapeGroup, type AttemptResult } from './scrapeGroup.js';
 
-// Run orchestration — docs/07-SCRAPER-SPEC.md §Run orchestration. Invariant: every item planned for a run
+// Run orchestration (DESIGN_NOTE.md §3). Invariant: every item planned for a run
 // ends up with exactly one scrape_attempts row, even when the run crashes (recovered by the next run).
 
 export const SLOT_MS = 2 * 60 * 60 * 1000;

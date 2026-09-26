@@ -18,7 +18,7 @@ const RUN_LABEL: Record<RunStatus, [string, string]> = {
   crashed: ['Crashed', 'text-failed'],
 };
 
-/** Top-bar pill: last run result + next scheduled run (docs/03-APP-FLOW.md §Navigation). */
+/** Top-bar pill: last run result + next scheduled run. */
 function StatusPill() {
   const health = useHealth();
   const runs = useRuns(5);
